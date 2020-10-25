@@ -65,6 +65,16 @@ braceVoidWristDepth = armHeightWristmm;
 
 braceYScaleElbowRatio = armHeightElbowmm/armWidthElbowmm;
 braceYScaleWristRatio = armHeightWristmm/armWidthWristmm;
+
+//strap measurements
+strapWidth = 50;
+strapHeight = 2; //ref: 2mm is thickness of webbing, so velcro around same?
+strapLoopLength = 7; //how much of the strap will be inside the loop
+strapLoopInnerWallWidth = 2; //inner wall thicker to supports strap compression
+strapLoopOuterWallWidth = 1; //outer wall there mostly to stop straps snagging on anything
+strapLoopSpacingFromBottom = 10;
+strapLoopSpacingFromTop = 10;
+//strapLoopHorizontalWallWidth = 2;
     
 
 //translate([0,-200,0]){
@@ -76,35 +86,57 @@ braceYScaleWristRatio = armHeightWristmm/armWidthWristmm;
 
 
 difference(){
-//choose the larger of the two ratios to decrease Y size by lower amount
-if ( braceYScaleElbowRatio > braceYScaleWristRatio ) {
-    braceYScaleRatio = braceYScaleElbowRatio;
-    echo("braceYScaleRatio using elbow = ", braceYScaleRatio);
-
-    difference(){
-        translate([0,0,0]){
-            scale([braceOuterWallScaleRatio,braceYScaleRatio*braceOuterWallScaleRatio,1]){
-                cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
-            }
-        }
-        
-        translate([0,0,0]){
-            scale([1,braceYScaleRatio,1]){
-                cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
-            }
-        }        
-    }
-} else {
-    braceYScaleRatio = braceYScaleWristRatio;
-    echo("braceYScaleRatio using wrist = ", braceYScaleRatio);
-    translate([0,0,0]){
-        scale([1,braceYScaleRatio,1]){
-            cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
-        }
-    }
-    color("Green")
-            cube([braceVoidElbowWidth*braceOuterWallScaleRatio,braceVoidElbowDepth*braceOuterWallScaleRatio/2,braceVoidHeight]);
-}
+    //choose the larger of the two ratios to decrease Y size by lower amount
+    if ( braceYScaleElbowRatio > braceYScaleWristRatio ) {
+        braceYScaleRatio = braceYScaleElbowRatio;
+        echo("braceYScaleRatio using elbow = ", braceYScaleRatio);
+    
+        difference(){
+            union(){
+                //outer cylinder
+                translate([0,0,0]){
+                    scale([braceOuterWallScaleRatio,braceYScaleRatio*braceOuterWallScaleRatio,1]){
+                        cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
+                    }
+                }
+                
+                
+                
+//                //strap measurements
+//strapWidth = 50;
+//strapHeight = 3;
+//strapLoopLength = 7; //how much of the strap will be inside the loop
+//strapLoopVerticalWallWidth = 2;
+//strapLoopHorizontalWallWidth = 2;
+                
+                
+                
+                //strap loop elbow side positive X
+                rotate([0,0,-180*(0.5-braceBottomCoverageRatio)]){
+                    translate([braceVoidElbowWidth/2*braceOuterWallScaleRatio,0,0]){
+                    
+                        color("Red")
+                        cube([strapHeight+strapLoopHorizontalWallWidth, strapLoopLength, strapWidth+strapLoopVerticalWallWidth]);
+                    }
+                }
+                
+                
+            } //end of union for all outer brace stuff
+            
+            translate([0,0,0]){
+                scale([1,braceYScaleRatio,1]){
+                    cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
+                }
+            }        
+        } //end of difference to remove inner void of brace
+    } else {//end of first if clause for larger ratio finding
+        braceYScaleRatio = braceYScaleWristRatio;
+        echo("braceYScaleRatio using wrist = ", braceYScaleRatio);
+    
+        color("Red")
+                cube([1000,1000,20]);
+        echo("fail. I forgot to/didn't yet copy in code to make brace.");
+    } //end of if for larger ratio finding
 
 
     braceBottomCoverageRatio = 0.45;
@@ -130,10 +162,10 @@ if ( braceYScaleElbowRatio > braceYScaleWristRatio ) {
             color("Green")
             cube([braceVoidElbowWidth*braceOuterWallScaleRatio,braceVoidElbowDepth*braceOuterWallScaleRatio/2,braceVoidHeight]);
         }
-    } else {
+    } else { //end of first if clause for rotating subtraction cubes
         echo("fail. less than 0.5 coverage ratio of bottom brace not coded yet.");
-    }
-}
+    } //end of if for rotating subtraction cubes
+} //end of difference between inner and outer cylinders to form brace
 
 
 
