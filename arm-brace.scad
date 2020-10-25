@@ -16,7 +16,7 @@ armLengthmm = armLengthInches * 25.4;
 
 //width is along the pinky to thumb axis
 //elbow measurement is width at the end towards elbow, not at elbow
-//wrist measurement is width at the end towards wrist, not at wrist, actually best immediately below wrist to avoid modeling complicated wrist shape, be closer to arm and hold better, and also allow for wrist movement if wanted
+//wrist measurement is width at the end towards wrist, not at wrist, actually best immediately below wrist (or further down) to avoid modeling complicated wrist shape, be closer to arm and hold better, and also allow for wrist movement if wanted
 armWidthElbowInches = 5;
 armWidthElbowmm = armWidthElbowInches * 25.4;
 armWidthWristInches = 3.5;
@@ -39,6 +39,7 @@ braceVoidPadding = 2;
 braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cna't hink of easy way to get constant width walls. so min width would probably be under the wrist/depth.
 
 braceOuterWallScaleRatio = (armHeightElbowmm+braceWallMinimumWidth)/armHeightElbowmm;
+echo("braceOuterWallScaleRatio = ", braceOuterWallScaleRatio);
 
 braceBottomCoverageRatio = 0.5; //how much of cylinder to actually print - 1 would be whole cylinder, 0.5 would be bottom half of cylinder, creating a cup like bottom. this measures from center bottom, so 0.5 will be 25% up from bottom on each side. 0.3 would be 15% up from cetner bottom towards center plane
 
@@ -93,6 +94,8 @@ difference(){
     
         difference(){
             union(){
+                //TODO increase outer cylinder dimension to include enough space for strap void
+                //TODO change from using a scale ratio to just increasing radius by wall thickness numbers for successive shells? but still need to account for the Y scaling ratio that will make strap void smaller on bottom of arm?
                 //outer cylinder
                 translate([0,0,0]){
                     scale([braceOuterWallScaleRatio,braceYScaleRatio*braceOuterWallScaleRatio,1]){
@@ -100,29 +103,22 @@ difference(){
                     }
                 }
                 
+                //TODO here i need to make the strap holes.
                 
+                //differnce of (which creates two strap semicircles that will be subtracted from actual arm brace)
+                    //outer shell (of strap hole) equal to void + inner wall width + strap thickness
+                    //then
+                    //inner shell (of strap hole) equal to void + inner wall width
+                    //3 cubes to cut limit how big strap holes are - top, middle, bottom
                 
-//                //strap measurements
-//strapWidth = 50;
-//strapHeight = 3;
-//strapLoopLength = 7; //how much of the strap will be inside the loop
-//strapLoopVerticalWallWidth = 2;
-//strapLoopHorizontalWallWidth = 2;
-                
-                
-                
-                //strap loop elbow side positive X
-                rotate([0,0,-180*(0.5-braceBottomCoverageRatio)]){
-                    translate([braceVoidElbowWidth/2*braceOuterWallScaleRatio,0,0]){
                     
-                        color("Red")
-                        cube([strapHeight+strapLoopHorizontalWallWidth, strapLoopLength, strapWidth+strapLoopVerticalWallWidth]);
-                    }
-                }
+               
+
                 
                 
             } //end of union for all outer brace stuff
             
+            //TODO? this might be done actually
             translate([0,0,0]){
                 scale([1,braceYScaleRatio,1]){
                     cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
