@@ -1,6 +1,10 @@
 //arm brace
 //justin lowe 2020-10-25
 
+use <dotSCAD/src/shape_circle.scad>;
+use <dotSCAD/src/loft.scad>;
+use <dotSCAD/src/shape_ellipse.scad>;
+
 //intent is to create a general arm brace to attach differnt platforms to
 
 //construction idea - create hollow cylinder, then scale so x and differnt ratios. have larger (roughly 50% coverage) arc on bottom of arm, then have smaller arc (20%?) on top of arm, velcro or some such straps around outside of both parts
@@ -38,10 +42,7 @@ echo("armHeightWristmm = ", armHeightWristmm);
 braceVoidPadding = 2;
 braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cna't hink of easy way to get constant width walls. so min width would probably be under the wrist/depth.
 
-braceOuterWallScaleRatio = (armHeightElbowmm+braceWallMinimumWidth)/armHeightElbowmm;
-echo("braceOuterWallScaleRatio = ", braceOuterWallScaleRatio);
-
-braceBottomCoverageRatio = 0.5; //how much of cylinder to actually print - 1 would be whole cylinder, 0.5 would be bottom half of cylinder, creating a cup like bottom. this measures from center bottom, so 0.5 will be 25% up from bottom on each side. 0.3 would be 15% up from cetner bottom towards center plane
+braceBottomCoverageRatio = 0.45; //how much of cylinder to actually print - 1 would be whole cylinder, 0.5 would be bottom half of cylinder, creating a cup like bottom. this measures from center bottom, so 0.5 will be 25% up from bottom on each side. 0.3 would be 15% up from cetner bottom towards center plane
 
 braceTopCoverageRatio = 0.2; //same, but starting from top center
 
@@ -56,16 +57,16 @@ if ( braceBottomCoverageRatio > 1 ){
 braceVoidHeight = armLengthmm;
 
 //brace width is same as arm width, but origin is in middle, so for a right arm then from center to pinky is positive X, from center to thumb is negative X 
-braceVoidElbowWidth = armWidthElbowmm;
-braceVoidWristWidth = armWidthWristmm;
+braceVoidElbowWidth = armWidthElbowmm + braceVoidPadding*2;
+braceVoidWristWidth = armWidthWristmm + braceVoidPadding*2;
+//todo account for scaling on Y and make this different?
 
 //brace depth is arm height, origin again in middle, so positive Y is form center to palm, negative Y is from center to back of hand
-braceVoidElbowDepth = armHeightElbowmm;
-braceVoidWristDepth = armHeightWristmm;
+braceVoidElbowDepth = armHeightElbowmm + braceVoidPadding*2;
+braceVoidWristDepth = armHeightWristmm + braceVoidPadding*2;
+//braceVoidElbowDepth = armHeightElbowmm;
+//braceVoidWristDepth = armHeightWristmm;
 
-
-braceYScaleElbowRatio = armHeightElbowmm/armWidthElbowmm;
-braceYScaleWristRatio = armHeightWristmm/armWidthWristmm;
 
 //strap measurements
 strapWidth = 50;
@@ -76,36 +77,41 @@ strapLoopOuterWallWidth = 1; //outer wall there mostly to stop straps snagging o
 strapLoopSpacingFromBottom = 10;
 strapLoopSpacingFromTop = 10;
 //strapLoopHorizontalWallWidth = 2;
+
+
+
     
 
 //translate([0,-200,0]){
 //    cylinder(braceVoidHeight,armHeightElbowmm/2,armHeightWristmm/2);
 //}
 
+//loft(
+//    [
+//        [for(p = shape_ellipse([braceVoidElbowWidth/2, braceVoidElbowDepth/2], $fn = 36)) [p[0], p[1], 0]],
+//        [for(p = shape_ellipse([braceVoidWristWidth/2, braceVoidWristDepth/2], $fn = 36)) [p[0], p[1], braceVoidHeight]]        
+//    ],
+//    slices = 6
+//);
 
 
-
-
+translate([0,0,0]){
 difference(){
-    //choose the larger of the two ratios to decrease Y size by lower amount
-    if ( braceYScaleElbowRatio > braceYScaleWristRatio ) {
-        braceYScaleRatio = braceYScaleElbowRatio;
-        echo("braceYScaleRatio using elbow = ", braceYScaleRatio);
     
-        difference(){
-            union(){
-                //TODO increase outer cylinder dimension to include enough space for strap void
-                //TODO change from using a scale ratio to just increasing radius by wall thickness numbers for successive shells? but still need to account for the Y scaling ratio that will make strap void smaller on bottom of arm?
-                //outer cylinder
-                translate([0,0,0]){
-                    scale([braceOuterWallScaleRatio,braceYScaleRatio*braceOuterWallScaleRatio,1]){
-                        cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
-                    }
-                }
+    //void of brace
+    loft(
+    [
+        [for(p = shape_ellipse([braceVoidElbowWidth/2, braceVoidElbowDepth/2], $fn = 36)) [p[0], p[1], 0]],
+        [for(p = shape_ellipse([braceVoidWristWidth/2, braceVoidWristDepth/2], $fn = 36)) [p[0], p[1], braceVoidHeight]]        
+    ],
+    slices = 6
+);
+        
+        
                 
                 //TODO here i need to make the strap holes.
                 
-                //differnce of (which creates two strap semicircles that will be subtracted from actual arm brace)
+                //difference of (which creates two strap semicircles that will be subtracted from actual arm brace)
                     //outer shell (of strap hole) equal to void + inner wall width + strap thickness
                     //then
                     //inner shell (of strap hole) equal to void + inner wall width
@@ -114,34 +120,14 @@ difference(){
                     
                
 
-                
-                
-            } //end of union for all outer brace stuff
-            
-            //TODO? this might be done actually
-            translate([0,0,0]){
-                scale([1,braceYScaleRatio,1]){
-                    cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
-                }
-            }        
-        } //end of difference to remove inner void of brace
-    } else {//end of first if clause for larger ratio finding
-        braceYScaleRatio = braceYScaleWristRatio;
-        echo("braceYScaleRatio using wrist = ", braceYScaleRatio);
-    
-        color("Red")
-                cube([1000,1000,20]);
-        echo("fail. I forgot to/didn't yet copy in code to make brace.");
-    } //end of if for larger ratio finding
 
 
-    braceBottomCoverageRatio = 0.45;
-    
+    //KEEP
     if ( braceBottomCoverageRatio <= 0.5 ) {
         translate([0,0,0]){
             rotate([0,0,-180*(0.5-braceBottomCoverageRatio)]){
                 color("Red")
-                cube([braceVoidElbowWidth*braceOuterWallScaleRatio/2,braceVoidElbowDepth*braceOuterWallScaleRatio/2,braceVoidHeight]);
+                cube([braceVoidElbowWidth,braceVoidElbowDepth,braceVoidHeight]);
             }
         }
         translate([0,0,0]){
@@ -149,20 +135,20 @@ difference(){
                 rotate([0,0,90]){
                 color("Blue")
                     //swap X & Y b/c of 90 deg rotation
-                cube([braceVoidElbowDepth*braceOuterWallScaleRatio/2,braceVoidElbowWidth*braceOuterWallScaleRatio/2,braceVoidHeight]);
+                cube([braceVoidElbowDepth,braceVoidElbowWidth,braceVoidHeight]);
                 }
             }
         }
         
         translate([-braceVoidElbowWidth/2,0,0]){
             color("Green")
-            cube([braceVoidElbowWidth*braceOuterWallScaleRatio,braceVoidElbowDepth*braceOuterWallScaleRatio/2,braceVoidHeight]);
+            cube([braceVoidElbowWidth,braceVoidElbowDepth,braceVoidHeight]);
         }
     } else { //end of first if clause for rotating subtraction cubes
         echo("fail. less than 0.5 coverage ratio of bottom brace not coded yet.");
     } //end of if for rotating subtraction cubes
 } //end of difference between inner and outer cylinders to form brace
-
+}
 
 
 //translate([0,0,0]){
