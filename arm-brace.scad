@@ -1,5 +1,6 @@
 //arm brace
 //justin lowe 2020-10-25
+//uses this library: https://github.com/JustinSDK/dotSCAD
 
 use <dotSCAD/src/shape_circle.scad>;
 use <dotSCAD/src/loft.scad>;
