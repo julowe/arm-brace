@@ -52,7 +52,7 @@ braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cn
 
 braceBottomCoverageRatio = 0.45; //how much of cylinder to actually print - 1 would be whole cylinder, 0.5 would be bottom half of cylinder, creating a cup like bottom. this measures from center bottom, so 0.5 will be 25% up from bottom on each side. 0.3 would be 15% up from cetner bottom towards center plane
 
-braceTopCoverageRatio = 0.2; //same, but starting from top center
+braceTopCoverageRatio = 0.3; //same, but starting from top center
 
 if ( braceBottomCoverageRatio > 1 ){
     echo("FAIL - ratio above 1 not supported. Or sensical");
