@@ -11,8 +11,13 @@ use <dotSCAD/src/shape_ellipse.scad>;
 
 //ASSUMPTION!!! : Arm height is smaller than width
 
-//can't think of an easy way to get a cylinder with seperate X & Y radii at bottom, and another set of seperate X & Y radii at top. Buuut since this will be mostly making a half (or less?) coverage of lower arm, we'll focus on getting the width right. Height variation from cylinder we are making can be accomodated with adjusting straps
+//TODO make attachment point at wrist end of brace for different platforms
+//TODO round edges
 
+
+draftingFNs = 18;
+renderingFNs = 180;
+currentFNs = draftingFNs;
 
 //
 //
@@ -72,7 +77,7 @@ braceVoidWristDepth = armHeightWristmm + braceVoidPadding*2;
 
 
 //strap measurements
-strapWidth = 50;
+strapWidth = 30;
 strapHeight = 3; //ref: 2mm is thickness of webbing, so velcro around same? add 1mm for printing tolerances
 strapLoopLength = 7; //how much of the strap will be inside the loop
 strapLoopInnerWallThickness = 2; //inner wall thicker to supports strap compression
@@ -99,63 +104,118 @@ braceOuterWristDepth = (strapLoopOuterWallThickness + strapHeight + strapLoopInn
 echo("braceVoidElbowWidth = ", braceVoidElbowWidth);
 echo("braceOuterElbowWidth = ", braceOuterElbowWidth);
 
+strapXelbowOffset = braceVoidHeight/4;
+strapXwristOffset = braceVoidHeight/4*3;
 
 //
 //MAKE STUFF
 //
 
-translate([0,0,0]){
-    //diffrence to make main brace wall
-    difference(){
-        //outermost wall of brace
-        loft(
-            [
-                [for(p = shape_ellipse([braceOuterElbowWidth/2, braceOuterElbowDepth/2], $fn = 9)) [p[0], p[1], 0]],
-                [for(p = shape_ellipse([braceOuterWristWidth/2, braceOuterWristDepth/2], $fn = 9)) [p[0], p[1], braceVoidHeight]]        
-            ],
-            slices = 6
-        );
-        
-        
-        //void of brace
-        loft(
-            [
-                [for(p = shape_ellipse([braceVoidElbowWidth/2, braceVoidElbowDepth/2], $fn = 9)) [p[0], p[1], 0]],
-                [for(p = shape_ellipse([braceVoidWristWidth/2, braceVoidWristDepth/2], $fn = 9)) [p[0], p[1], braceVoidHeight]]        
-            ],
-            slices = 6
-        );
+//subtract strap voids from main brace wall
+difference(){
+    translate([0,0,0]){
+        //diffrence to make main brace wall
+        difference(){
+            //outermost wall of brace
+            loft(
+                [
+                    [for(p = shape_ellipse([braceOuterElbowWidth/2, braceOuterElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                    [for(p = shape_ellipse([braceOuterWristWidth/2, braceOuterWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                ],
+                slices = 6
+            );
             
-    
-        //KEEP
-        if ( braceBottomCoverageRatio <= 0.5 ) {
-            translate([0,0,0]){
-                rotate([0,0,-180*(0.5-braceBottomCoverageRatio)]){
-                    color("Red")
-                    cube([braceVoidElbowWidth,braceVoidElbowDepth,braceVoidHeight]);
-                }
-            }
-            translate([0,0,0]){
-                rotate([0,0,180*(0.5-braceBottomCoverageRatio)]){
-                    rotate([0,0,90]){
-                    color("Blue")
-                        //swap X & Y b/c of 90 deg rotation
-                    cube([braceVoidElbowDepth,braceVoidElbowWidth,braceVoidHeight]);
+            
+            //void of brace
+            loft(
+                [
+                    [for(p = shape_ellipse([braceVoidElbowWidth/2, braceVoidElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                    [for(p = shape_ellipse([braceVoidWristWidth/2, braceVoidWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                ],
+                slices = 6
+            );
+                
+        
+            //KEEP
+            if ( braceBottomCoverageRatio <= 0.5 ) {
+                translate([0,0,0]){
+                    rotate([0,0,-180*(0.5-braceBottomCoverageRatio)]){
+                        color("Red")
+                        cube([braceVoidElbowWidth,braceVoidElbowDepth,braceVoidHeight]);
                     }
                 }
+                translate([0,0,0]){
+                    rotate([0,0,180*(0.5-braceBottomCoverageRatio)]){
+                        rotate([0,0,90]){
+                        color("Blue")
+                            //swap X & Y b/c of 90 deg rotation
+                        cube([braceVoidElbowDepth,braceVoidElbowWidth,braceVoidHeight]);
+                        }
+                    }
+                }
+                
+                translate([-braceVoidElbowWidth/2,0,0]){
+                    color("Green")
+                    cube([braceVoidElbowWidth,braceVoidElbowDepth,braceVoidHeight]);
+                }
+            } else { //end of first if clause for rotating subtraction cubes
+                echo("fail. less than 0.5 coverage ratio of bottom brace not coded yet.");
+            } //end of if for rotating subtraction cubes
+        } //end of difference between inner and outer cylinders to form main brace wall
+    } //end of translate
+    //whitespace
+    
+    
+    
+    translate([0,0,0]){
+        //removing cubes from strap wall to make positive objects which will be strap voids
+        difference(){
+        //diffrence to make overall strap brace wall
+            difference(){
+                //outermost strap wall
+                loft(
+                    [
+                        [for(p = shape_ellipse([strapWallOuterElbowWidth/2, strapWallOuterElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                        [for(p = shape_ellipse([strapWallOuterWristWidth/2, strapWallOuterWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                    ],
+                    slices = 6
+                );
+                
+                //inner strap wall
+                loft(
+                    [
+                        [for(p = shape_ellipse([strapWallInnerElbowWidth/2, strapWallInnerElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                        [for(p = shape_ellipse([strapWallInnerWristWidth/2, strapWallInnerWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                    ],
+                    slices = 6
+                );
+         
+            } //end of difference between inner and outer loftd objects to form overall strap wall 
+            
+            //
+            //remove cubes
+            translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, 0]){
+                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, strapXelbowOffset-strapWidth/2]);
+            }
+            translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXelbowOffset+strapWidth/2]){
+                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, (strapXwristOffset-strapWidth/2) - (strapXelbowOffset+strapWidth/2)]);
+            }
+            translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
+                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
             }
             
-            translate([-braceVoidElbowWidth/2,0,0]){
-                color("Green")
-                cube([braceVoidElbowWidth,braceVoidElbowDepth,braceVoidHeight]);
-            }
-        } else { //end of first if clause for rotating subtraction cubes
-            echo("fail. less than 0.5 coverage ratio of bottom brace not coded yet.");
-        } //end of if for rotating subtraction cubes
-    } //end of difference between inner and outer cylinders to form main brace wall
-} //end of translate
+        } //end of cube subtraction difference
+    } //end of translate
+}
+//whitespace
 
 
+
+//        translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, 0]){
+//            color("Green", 0.3)
+//            cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, strapXelbowOffset-strapWidth/2]);
+//        }
+        
 //translate([0,0,0]){
 //    scale([1,braceYScaleRatio,1]){
 //        cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
