@@ -14,7 +14,12 @@ use <dotSCAD/src/shape_ellipse.scad>;
 
 //TODO make attachment point at wrist end of brace for different platforms
 //TODO round edges
+//TODO think about differnt attachment points & methods
+  //e.g. pressfit holes in brace shells? bottom slot for palm/finger accessible platforms?box on top for arduino for keyboards or costume stuff?
+ 
+//TODO paste libraries' text inside this file so this model/file works in the thingiverse customizer? 
 
+//TODO figure out if better to subtract angles and/or inside/void from ellipse and then loft, or do after as we do here with cubes sutracting aroudn the brace and another lofted ellipse subtracting the void. can we difference two shape_ellipse functions and still ahve the points needed to loft it?
 
 draftingFNs = 18;
 renderingFNs = 180;
@@ -193,6 +198,7 @@ difference(){
          
             } //end of difference between inner and outer loftd objects to form overall strap wall 
             
+            //TODO change so you can specify 'distance from ends' for random lengths of brace and easier placing of strap holes in general if desired
             //
             //remove cubes
             translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, 0]){
