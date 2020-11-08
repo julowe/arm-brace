@@ -111,6 +111,12 @@ strapLoopSpacingFromBottom = 10;
 strapLoopSpacingFromTop = 14;
 //strapLoopHorizontalWallWidth = 2;
 
+attachmentTongueThickness = 3; //how thick is tongue of hand/etc attachment joint that goes into brace
+attachmentTongueThicknessTolerance = 0.2; //how much gap to leave between each side of tongue that goes into brace
+attachmentTongueLength = 30;
+//braceBottomCoverageRatio
+attachmentTongueCoverageRatio = 0.2;
+
 strapWallInnerElbowWidth = (strapLoopInnerWallThickness)*2 + braceVoidElbowWidth;
 strapWallInnerElbowDepth = (strapLoopInnerWallThickness)*2 + braceVoidElbowDepth;
 strapWallInnerWristWidth = (strapLoopInnerWallThickness)*2 + braceVoidWristWidth;
@@ -134,6 +140,13 @@ strapXwristOffset = braceVoidHeight/4*3;
 
 echo("strapXelbowOffset = ", strapXelbowOffset);
 echo("strapXwristOffset = ", strapXwristOffset);
+
+if (attachmentTongueLength > braceVoidHeight-strapXwristOffset) {
+    echo("FAIL - attachment Tongue Length is too long and will stick into strap path");
+    //ugh make a better fail or make an if statement that matter down below
+}
+
+
 //
 //MAKE STUFF
 //
@@ -233,8 +246,33 @@ difference(){
             translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXelbowOffset+strapWidth/2]){
                 cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, (strapXwristOffset-strapWidth/2) - (strapXelbowOffset+strapWidth/2)]);
             }
-            translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
-                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
+            
+            //now some fanciness to make the tongue attachment void
+            //area right above wrist strap
+//            translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
+//                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
+////                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)-attachmentTongueLength]);
+//            }
+            
+            //tongue attachment void
+            difference(){
+                translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
+                    cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
+                }
+
+                xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
+                
+                translate([0,0,braceVoidHeight-attachmentTongueLength]){
+                    linear_extrude(attachmentTongueLength){
+                        polygon([
+                        [0,0],
+                        [xCoordAttachmentTongueAngleCutout,-100],
+                        [-xCoordAttachmentTongueAngleCutout,-100]
+                        ]);
+                    }
+                }
+                
+                
             }
             
         } //end of cube subtraction difference
