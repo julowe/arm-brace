@@ -24,10 +24,14 @@ use <dotSCAD/src/shape_ellipse.scad>;
 draftingFNs = 18;
 renderingFNs = 180;
 currentFNs = draftingFNs;
+//draftingFNs can leave weird zero/non-zero plane at top of void...
 
 //
 //
-//measurements - arm laying along a table with palm and elbow on table.
+//arm measurements - arm laying along a table with palm and elbow on table.
+//
+//
+
 //LENGTH is along the elbow to wrist axis
 armLengthInches = 8;
 armLengthmm = armLengthInches * 25.4;
@@ -52,9 +56,16 @@ armHeightWristmm = armHeightWristInches * 25.4;
 echo("armHeightElbowmm = ", armHeightElbowmm);
 echo("armHeightWristmm = ", armHeightWristmm);
 
+//
+//
+//END arm measurements - arm laying along a table with palm and elbow on table.
+//
+//
+
 //ratios/additions
-braceVoidPadding = 2;
-braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cna't hink of easy way to get constant width walls. so min width would probably be under the wrist/depth.
+braceVoidPadding = 2; //added space between arm and actual brace
+//TODO delete if no longer needed
+//braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cna't hink of easy way to get constant width walls. so min width would probably be under the wrist/depth.
 
 braceBottomCoverageRatio = 0.45; //how much of cylinder to actually print - 1 would be whole cylinder, 0.5 would be bottom half of cylinder, creating a cup like bottom. this measures from center bottom, so 0.5 will be 25% up from bottom on each side. 0.3 would be 15% up from cetner bottom towards center plane
 
@@ -85,11 +96,19 @@ braceVoidWristDepth = armHeightWristmm + braceVoidPadding*2;
 //strap measurements
 strapWidth = 30;
 strapHeight = 3; //ref: 2mm is thickness of webbing, so velcro around same? add 1mm for printing tolerances
+
+//TODO huh? what did i mean for this variable below??
 strapLoopLength = 7; //how much of the strap will be inside the loop
-strapLoopInnerWallThickness = 2; //inner wall thicker to supports strap compression
-strapLoopOuterWallThickness = 1; //outer wall there mostly to stop straps snagging on anything
+
+strapLoopInnerWallThickness = 1; //inner wall thicker to supports strap compression
+strapLoopOuterWallThickness = 2; //outer wall there mostly to stop straps snagging on anything
+//TODO changing this from 1 makes a weird plane appear at top of brace.... FIXME
+//workaround so far is to set FNs higher and that stops this... ?
+
+
+//FIXME yeah this isn't used. use or delete.
 strapLoopSpacingFromBottom = 10;
-strapLoopSpacingFromTop = 10;
+strapLoopSpacingFromTop = 14;
 //strapLoopHorizontalWallWidth = 2;
 
 strapWallInnerElbowWidth = (strapLoopInnerWallThickness)*2 + braceVoidElbowWidth;
@@ -113,6 +132,8 @@ echo("braceOuterElbowWidth = ", braceOuterElbowWidth);
 strapXelbowOffset = braceVoidHeight/4;
 strapXwristOffset = braceVoidHeight/4*3;
 
+echo("strapXelbowOffset = ", strapXelbowOffset);
+echo("strapXwristOffset = ", strapXwristOffset);
 //
 //MAKE STUFF
 //
@@ -172,7 +193,9 @@ difference(){
     //whitespace
     
     
-    
+    //
+    // STRAPS
+    //
     translate([0,0,0]){
         //removing cubes from strap wall to make positive objects which will be strap voids
         difference(){
@@ -196,14 +219,17 @@ difference(){
                     slices = 6
                 );
          
-            } //end of difference between inner and outer loftd objects to form overall strap wall 
+            } //end of difference between inner and outer lofted objects to form overall strap wall 
             
             //TODO change so you can specify 'distance from ends' for random lengths of brace and easier placing of strap holes in general if desired
             //
             //remove cubes
+            //elbow cube offset
             translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, 0]){
                 cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, strapXelbowOffset-strapWidth/2]);
             }
+            
+            //middle cube offset
             translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXelbowOffset+strapWidth/2]){
                 cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, (strapXwristOffset-strapWidth/2) - (strapXelbowOffset+strapWidth/2)]);
             }
