@@ -1,6 +1,7 @@
 //arm brace
 //justin lowe 2020-10-25
 //uses this library: https://github.com/JustinSDK/dotSCAD
+// (not mine)
 
 use <dotSCAD/src/shape_circle.scad>;
 use <dotSCAD/src/loft.scad>;
@@ -23,7 +24,7 @@ use <dotSCAD/src/shape_ellipse.scad>;
 
 draftingFNs = 18;
 renderingFNs = 180;
-currentFNs = draftingFNs;
+currentFNs = renderingFNs;
 //draftingFNs can leave weird zero/non-zero plane at top of void...
 
 //
@@ -280,6 +281,56 @@ difference(){
 }
 //whitespace
 
+
+//
+// tongue attachment
+//
+
+//TODO test print and see if more tolerance needed - and if need to change elbow side tolerance
+//TODO also what is thickness of tongue at elbow side, vs thickness of tongue void at wrist side...?
+//FIXME I somehow highly doubt this will be so simple, no way this tongue could fit in...
+translate([100,0,0]){
+    intersection(){
+difference(){
+                //outermost strap wall
+                loft(
+                    [
+                        [for(p = shape_ellipse([strapWallOuterElbowWidth/2, strapWallOuterElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                        [for(p = shape_ellipse([strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance, strapWallOuterWristDepth/2-attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                    ],
+                    slices = 6
+                );
+                
+                //inner strap wall
+                loft(
+                    [
+                        [for(p = shape_ellipse([strapWallInnerElbowWidth/2, strapWallInnerElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                        [for(p = shape_ellipse([strapWallInnerWristWidth/2+attachmentTongueThicknessTolerance, strapWallInnerWristDepth/2+attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                    ],
+                    slices = 6
+                );
+         
+            } //end of difference between inner and outer lofted objects to form overall strap wall 
+            
+        
+        
+                        xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
+                
+                translate([0,0,braceVoidHeight-attachmentTongueLength]){
+                    linear_extrude(attachmentTongueLength){
+                        polygon([
+                        [0,0],
+                        [xCoordAttachmentTongueAngleCutout,-100],
+                        [-xCoordAttachmentTongueAngleCutout,-100]
+                        ]);
+                    }
+                }
+            }
+        
+    }
+            
+            
+            
 
 
 //        translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, 0]){
