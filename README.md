@@ -31,7 +31,7 @@ Height is along the palm to back of hand axis.
 
 "Wrist" measurement is width or height at the end of the brace which is towards the wrist (not at wrist). Probably actually best if measurement is taken immediately below wrist (or even further down) to avoid the need to model the complicated wrist shape and so the brace is closer to arm and will move around less. And then also it will allow for wrist movement if wanted.
 
-TODO Add picture with axis drawn on.
+![Arm with Axes](arm-measurements.jpg "View of Arm with measurement axes drawn on")
 
 
 ## Images
