@@ -57,13 +57,38 @@ armHeightWristmm = armHeightWristInches * 25.4;
 echo("armHeightElbowmm = ", armHeightElbowmm);
 echo("armHeightWristmm = ", armHeightWristmm);
 
+
+//letters correspond to a random pencil-paper diagram. this is of no use to anyone but me right now until i lose this paper
+// A = armHeightElbowmm/2
+// B = armLengthmm
+// H = armHeightWristmm/2
+armBraceAngle = atan(armLengthmm/(armHeightElbowmm/2 - armHeightWristmm/2));
+echo("armBraceAngle = ", armBraceAngle);
+
 //
 //
 //END arm measurements - arm laying along a table with palm and elbow on table.
+// CHOICES
 //
 //
 
-//ratios/additions
+//this will just render the brace model, with further options right below
+printBrace = true;
+//printBrace = false;
+
+//making tongue will generate void
+makeTongue = true;
+//makeTongue = false;
+
+//printing tongue will make the tongue itself if makeTongue is also true (this is needed because you will still want to make tongue void even if you don't render it in same scene)
+printTongue = true;
+//printTongue = false;
+
+//
+//
+// ratios/additions
+//
+//
 braceVoidPadding = 2; //added space between arm and actual brace
 //TODO delete if no longer needed
 //braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cna't hink of easy way to get constant width walls. so min width would probably be under the wrist/depth.
@@ -117,6 +142,11 @@ attachmentTongueThicknessTolerance = 0.2; //how much gap to leave between each s
 attachmentTongueLength = 30;
 //braceBottomCoverageRatio
 attachmentTongueCoverageRatio = 0.2;
+tongueAngleOffsetRatio = -2;//how much more to rotate the tongue subtraction triangle from the brace offset angle (angle near elbow side, made by brace shell from elbow to wrist). FIXME?? Ugh this magic number will probably bite me if angle of brace gets too large... not sure better way to do this...
+
+attachmentTonguePlatformHeight = 5; //Xmm extra material above the tongue that goe sinto brace - for ease of adding platform shapes (in other programs) that will sit flush wiht end of brace.
+attachmentTonguePlatformCoverageRatio = 0.3; //what percent of lower arm fanout/angle for extra tongue material to cover
+
 
 strapWallInnerElbowWidth = (strapLoopInnerWallThickness)*2 + braceVoidElbowWidth;
 strapWallInnerElbowDepth = (strapLoopInnerWallThickness)*2 + braceVoidElbowDepth;
@@ -153,6 +183,7 @@ if (attachmentTongueLength > braceVoidHeight-strapXwristOffset) {
 //
 
 //subtract strap voids from main brace wall
+module brace(){
 difference(){
     translate([0,0,0]){
         //diffrence to make main brace wall
@@ -177,7 +208,12 @@ difference(){
             );
                 
         
-            //KEEP
+                    //TODO change to: one shap elipse mius another
+                    //then a constructed polygon using trig
+                    //intersection_for ??
+                    //hollow_out??
+                    
+            //Parts to KEEP
             if ( braceBottomCoverageRatio <= 0.5 ) {
                 translate([0,0,0]){
                     rotate([0,0,-180*(0.5-braceBottomCoverageRatio)]){
@@ -248,36 +284,40 @@ difference(){
                 cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, (strapXwristOffset-strapWidth/2) - (strapXelbowOffset+strapWidth/2)]);
             }
             
-            //now some fanciness to make the tongue attachment void
+
             //area right above wrist strap
-//            translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
-//                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
-////                cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)-attachmentTongueLength]);
-//            }
-            
             //tongue attachment void
             difference(){
                 translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
                     cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
                 }
 
+                
+            if (makeTongue){
+            //tongue attachment void
                 xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
                 
+            tongueAngleOffset = -2 * (90 - armBraceAngle);
+                
                 translate([0,0,braceVoidHeight-attachmentTongueLength]){
-                    linear_extrude(attachmentTongueLength){
-                        polygon([
-                        [0,0],
-                        [xCoordAttachmentTongueAngleCutout,-100],
-                        [-xCoordAttachmentTongueAngleCutout,-100]
-                        ]);
+                    rotate([tongueAngleOffset,0,0]){
+                        linear_extrude(attachmentTongueLength){
+                            polygon([
+                            [0,0],
+                            [xCoordAttachmentTongueAngleCutout,-100],
+                            [-xCoordAttachmentTongueAngleCutout,-100]
+                            ]);
+                        }
                     }
                 }
                 
                 
             }
+            }
             
         } //end of cube subtraction difference
     } //end of translate
+}
 }
 //whitespace
 
@@ -287,49 +327,115 @@ difference(){
 //
 
 //TODO test print and see if more tolerance needed - and if need to change elbow side tolerance
-//TODO also what is thickness of tongue at elbow side, vs thickness of tongue void at wrist side...?
-//FIXME I somehow highly doubt this will be so simple, no way this tongue could fit in...
+  //tolerance exists on inside and outside of brace, but not on (thin) sides of tongue
+//TODO also what is thickness of tongue at elbow side, vs thickness of tongue void at wrist side...? will this stop the bottom of tongue from sliding in past top of tongue void opening? or is neglible enough that it might actually help friction fit it??
+//FIXME I somehow highly doubt this will be done right the first time, no way this tongue could fit in...
+
+module tongue(){
 translate([100,0,0]){
     intersection(){
-difference(){
-                //outermost strap wall
-                loft(
-                    [
-                        [for(p = shape_ellipse([strapWallOuterElbowWidth/2, strapWallOuterElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
-                        [for(p = shape_ellipse([strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance, strapWallOuterWristDepth/2-attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
-                    ],
-                    slices = 6
-                );
-                
-                //inner strap wall
-                loft(
-                    [
-                        [for(p = shape_ellipse([strapWallInnerElbowWidth/2, strapWallInnerElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
-                        [for(p = shape_ellipse([strapWallInnerWristWidth/2+attachmentTongueThicknessTolerance, strapWallInnerWristDepth/2+attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
-                    ],
-                    slices = 6
-                );
-         
-            } //end of difference between inner and outer lofted objects to form overall strap wall 
+        difference(){
+            //outermost strap wall
+            loft(
+                [
+                    [for(p = shape_ellipse([strapWallOuterElbowWidth/2, strapWallOuterElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                    [for(p = shape_ellipse([strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance, strapWallOuterWristDepth/2-attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                ],
+                slices = 6
+            );
             
+            //inner strap wall
+            loft(
+                [
+                    [for(p = shape_ellipse([strapWallInnerElbowWidth/2, strapWallInnerElbowDepth/2], $fn = currentFNs)) [p[0], p[1], 0]],
+                    [for(p = shape_ellipse([strapWallInnerWristWidth/2+attachmentTongueThicknessTolerance, strapWallInnerWristDepth/2+attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]]        
+                ],
+                slices = 6
+            );
         
-        
-                        xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
-                
-                translate([0,0,braceVoidHeight-attachmentTongueLength]){
-                    linear_extrude(attachmentTongueLength){
-                        polygon([
-                        [0,0],
-                        [xCoordAttachmentTongueAngleCutout,-100],
-                        [-xCoordAttachmentTongueAngleCutout,-100]
-                        ]);
-                    }
-                }
+        } //end of difference between inner and outer lofted objects to form overall strap wall 
+    
+    xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
+    
+    tongueAngleOffset = tongueAngleOffsetRatio * (90 - armBraceAngle); 
+    
+    translate([0,0,braceVoidHeight-attachmentTongueLength]){
+        rotate([tongueAngleOffset,0,0]){
+            linear_extrude(attachmentTongueLength){
+                polygon([
+                    [0,0],
+                    [xCoordAttachmentTongueAngleCutout,-100],
+                    [-xCoordAttachmentTongueAngleCutout,-100]
+                ]);
             }
-        
+        }
     }
-            
-            
+    
+    //                translate([0,0,braceVoidHeight-attachmentTongueLength]){
+    //                    linear_extrude(attachmentTongueLength){
+    //                        polygon([
+    //                        [0,0],
+    //                        [xCoordAttachmentTongueAngleCutout,-100],
+    //                        [-xCoordAttachmentTongueAngleCutout,-100]
+    //                        ]);
+    //                    }
+    //                }
+    } //end intersection for tongue
+
+    //MAKE extra material that joins to tongue and sits flush with end of brace  
+    //yes this is excessive to just linear extrude an ellipse, but it is the same code... so less chance of errors??
+    intersection(){    
+        difference(){
+            //outermost strap wall
+            loft(
+                [
+                    [for(p = shape_ellipse([strapWallOuterWristWidth/2, strapWallOuterWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]],
+                    [for(p = shape_ellipse([strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance, strapWallOuterWristDepth/2-attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight + attachmentTonguePlatformHeight]]        
+                ],
+                slices = 1
+            );
+        
+            //inner strap wall
+            loft(
+                [
+                    [for(p = shape_ellipse([strapWallInnerWristWidth/2, strapWallInnerWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]],
+                    [for(p = shape_ellipse([strapWallInnerWristWidth/2+attachmentTongueThicknessTolerance, strapWallInnerWristDepth/2+attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight + attachmentTonguePlatformHeight]]        
+                ],
+                slices = 1
+            );
+        
+        } //end of difference between inner and outer lofted objects to form overall strap wall 
+    
+        xCoordAttachmentTonguePlatformAngleCutout = tan((attachmentTonguePlatformCoverageRatio/2)*360)*100;
+        
+        //            tongueAngleOffset = tongueAngleOffsetRatio * (90 - armBraceAngle);
+        
+        translate([0,0,braceVoidHeight]){
+        //                    rotate([tongueAngleOffset,0,0]){
+            linear_extrude(attachmentTonguePlatformHeight){
+                polygon([
+                    [0,0],
+                    [xCoordAttachmentTonguePlatformAngleCutout,-100],
+                    [-xCoordAttachmentTonguePlatformAngleCutout,-100]
+                ]);
+            }
+        //                    }
+        }
+    }
+
+}
+} //end module tongue
+//whitespace (when module collapsed)
+
+if (printBrace){
+    brace();
+}
+     
+if (makeTongue){
+    if (printTongue){
+       tongue();
+    }
+}         
             
 
 
