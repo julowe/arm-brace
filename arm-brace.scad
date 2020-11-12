@@ -9,13 +9,13 @@ use <dotSCAD/src/shape_ellipse.scad>;
 
 //intent is to create a general arm brace to attach differnt platforms to
 
-//construction idea - create hollow cylinder, then scale so x and differnt ratios. have larger (roughly 50% coverage) arc on bottom of arm, then have smaller arc (20%?) on top of arm, velcro or some such straps around outside of both parts
+//construction idea - create hollow cylinder, then scale so x and different ratios. have larger (roughly 50% coverage) arc on bottom of arm, then have smaller arc (20%?) on top of arm, velcro or some such straps around outside of both parts
 
 //ASSUMPTION!!! : Arm height is smaller than width
 
 //TODO make attachment point at wrist end of brace for different platforms
 //TODO round edges
-//TODO think about differnt attachment points & methods
+//TODO think about different attachment points & methods
   //e.g. pressfit holes in brace shells? bottom slot for palm/finger accessible platforms?box on top for arduino for keyboards or costume stuff?
  
 //TODO paste libraries' text inside this file so this model/file works in the thingiverse customizer? 
@@ -29,20 +29,20 @@ currentFNs = renderingFNs;
 
 //
 //
-//arm measurements - arm laying along a table with palm and elbow on table.
+// ARM MEASUREMENTS - arm laying along a table with palm and elbow on table.
 //
 //
 
 //LENGTH is along the elbow to wrist axis
-armLengthInches = 8;
+armLengthInches = 5 + 3/4;
 armLengthmm = armLengthInches * 25.4;
 
 //WIDTH is along the pinky to thumb axis
 //elbow measurement is width at the end towards elbow, not at elbow
 //wrist measurement is width at the end towards wrist, not at wrist, actually best immediately below wrist (or further down) to avoid modeling complicated wrist shape, be closer to arm and hold better, and also allow for wrist movement if wanted
-armWidthElbowInches = 5;
+armWidthElbowInches = 3;
 armWidthElbowmm = armWidthElbowInches * 25.4;
-armWidthWristInches = 3.5;
+armWidthWristInches = 2.5;
 armWidthWristmm = armWidthWristInches * 25.4;
 echo("armWidthElbowmm = ", armWidthElbowmm);
 echo("armWidthWristmm = ", armWidthWristmm);
@@ -50,9 +50,9 @@ echo("armWidthWristmm = ", armWidthWristmm);
 //HEIGHT (postive) is along the palm to back of hand axis
 //elbow measurement is height at the end towards elbow, not at elbow
 //wrist measurement is height at the end towards wrist, not at wrist, actually best immediately below wrist to avoid modeling complicated wrist shape, be closer to arm and hold better, and also allow for wrist movement if wanted 
-armHeightElbowInches = 3;
+armHeightElbowInches = 2 + 3/4;
 armHeightElbowmm = armHeightElbowInches * 25.4;
-armHeightWristInches = 2;
+armHeightWristInches = 1 + 5/8;
 armHeightWristmm = armHeightWristInches * 25.4;
 echo("armHeightElbowmm = ", armHeightElbowmm);
 echo("armHeightWristmm = ", armHeightWristmm);
@@ -67,7 +67,12 @@ echo("armBraceAngle = ", armBraceAngle);
 
 //
 //
-//END arm measurements - arm laying along a table with palm and elbow on table.
+// END arm measurements - arm laying along a table with palm and elbow on table.
+//
+//
+
+//
+//
 // CHOICES
 //
 //
@@ -132,7 +137,7 @@ strapLoopOuterWallThickness = 2; //outer wall there mostly to stop straps snaggi
 //workaround so far is to set FNs higher and that stops this... ?
 
 
-//FIXME yeah this isn't used. use or delete.
+//FIXME yeah this isn't used. currently using ratios so differnt sizes should work better? maybe need to check that strap widths are not bigger than brace/interesct each other... use or delete these variables below.
 strapLoopSpacingFromBottom = 10;
 strapLoopSpacingFromTop = 14;
 //strapLoopHorizontalWallWidth = 2;
@@ -174,7 +179,7 @@ echo("strapXwristOffset = ", strapXwristOffset);
 
 if (attachmentTongueLength > braceVoidHeight-strapXwristOffset) {
     echo("FAIL - attachment Tongue Length is too long and will stick into strap path");
-    //ugh make a better fail or make an if statement that matter down below
+    //ugh make a better fail or make an if statement that actually halts render down below
 }
 
 
@@ -286,12 +291,10 @@ difference(){
             
 
             //area right above wrist strap
-            //tongue attachment void
-            difference(){
+            difference(){ //if you don't make a tongue, this difference will not have a 2nd object so subtract (which woudl make a tongue void) but that is fine)
                 translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, strapXwristOffset+strapWidth/2]){
                     cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, braceVoidHeight - (strapXwristOffset+strapWidth/2)]);
                 }
-
                 
             if (makeTongue){
             //tongue attachment void
@@ -439,17 +442,3 @@ if (makeTongue){
             
 
 
-//        translate([-strapWallOuterElbowWidth/2, -strapWallOuterElbowDepth/2, 0]){
-//            color("Green", 0.3)
-//            cube([strapWallOuterElbowWidth, strapWallOuterElbowDepth, strapXelbowOffset-strapWidth/2]);
-//        }
-        
-//translate([0,0,0]){
-//    scale([1,braceYScaleRatio,1]){
-//        cylinder(braceVoidHeight,braceVoidElbowWidth/2,braceVoidWristWidth/2);
-//    }
-//}
-
-//translate([300,0,0]){
-//    cylinder(braceVoidHeight,armWidthElbowmm,armWidthWristmm);
-//}
