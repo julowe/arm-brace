@@ -25,7 +25,9 @@ use <dotSCAD/src/shape_ellipse.scad>;
 draftingFNs = 18;
 renderingFNs = 180;
 currentFNs = renderingFNs;
+$fn = currentFNs;
 //draftingFNs can leave weird zero/non-zero plane at top of void...
+
 
 //
 //
@@ -36,6 +38,7 @@ currentFNs = renderingFNs;
 //LENGTH is along the elbow to wrist axis
 armLengthInches = 5 + 3/4;
 armLengthmm = armLengthInches * 25.4;
+echo("armLengthmm = ", armLengthmm);
 
 //WIDTH is along the pinky to thumb axis
 //elbow measurement is width at the end towards elbow, not at elbow
@@ -78,8 +81,8 @@ echo("armBraceAngle = ", armBraceAngle);
 //
 
 //this will just render the brace model, with further options right below
-printBrace = true;
-//printBrace = false;
+//printBrace = true;
+printBrace = false;
 
 //making tongue will generate void
 makeTongue = true;
@@ -89,13 +92,15 @@ makeTongue = true;
 printTongue = true;
 //printTongue = false;
 
+
 //
 //
 // ratios/additions
 //
 //
+
 braceVoidPadding = 2; //added space between arm and actual brace
-//TODO delete if no longer needed
+//TODO delete below if no longer needed
 //braceWallMinimumWidth = 3; //just using scale to make bigger cylinder because cna't hink of easy way to get constant width walls. so min width would probably be under the wrist/depth.
 
 braceBottomCoverageRatio = 0.45; //how much of cylinder to actually print - 1 would be whole cylinder, 0.5 would be bottom half of cylinder, creating a cup like bottom. this measures from center bottom, so 0.5 will be 25% up from bottom on each side. 0.3 would be 15% up from cetner bottom towards center plane
@@ -131,7 +136,7 @@ strapHeight = 3; //ref: 2mm is thickness of webbing, so velcro around same? add 
 //TODO huh? what did i mean for this variable below??
 strapLoopLength = 7; //how much of the strap will be inside the loop
 
-strapLoopInnerWallThickness = 1; //inner wall thicker to supports strap compression
+strapLoopInnerWallThickness = 2; //inner wall thicker to supports strap compression
 strapLoopOuterWallThickness = 2; //outer wall there mostly to stop straps snagging on anything
 //TODO changing this from 1 makes a weird plane appear at top of brace.... FIXME
 //workaround so far is to set FNs higher and that stops this... ?
@@ -144,14 +149,22 @@ strapLoopSpacingFromTop = 14;
 
 attachmentTongueThickness = 3; //how thick is tongue of hand/etc attachment joint that goes into brace
 attachmentTongueThicknessTolerance = 0.2; //how much gap to leave between each side of tongue that goes into brace
-attachmentTongueLength = 30;
+attachmentTongueLength = 22;
 //braceBottomCoverageRatio
 attachmentTongueCoverageRatio = 0.2;
+attachmentArbitraryBigNumber = 100;
+xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*attachmentArbitraryBigNumber;
+    
 tongueAngleOffsetRatio = -2;//how much more to rotate the tongue subtraction triangle from the brace offset angle (angle near elbow side, made by brace shell from elbow to wrist). FIXME?? Ugh this magic number will probably bite me if angle of brace gets too large... not sure better way to do this...
 
 attachmentTonguePlatformHeight = 5; //Xmm extra material above the tongue that goe sinto brace - for ease of adding platform shapes (in other programs) that will sit flush wiht end of brace.
 attachmentTonguePlatformCoverageRatio = 0.3; //what percent of lower arm fanout/angle for extra tongue material to cover
+xCoordAttachmentTonguePlatformAngleCutout = tan((attachmentTonguePlatformCoverageRatio/2)*360)*attachmentArbitraryBigNumber;
 
+//platform vars
+platformRolloverRadius = 4.5;
+platformOvershelfWidth = 90; //chagne this to boundign box instead of explicit cube?
+platformOvershelfDepth = 15;
 
 strapWallInnerElbowWidth = (strapLoopInnerWallThickness)*2 + braceVoidElbowWidth;
 strapWallInnerElbowDepth = (strapLoopInnerWallThickness)*2 + braceVoidElbowDepth;
@@ -177,8 +190,10 @@ strapXwristOffset = braceVoidHeight/4*3;
 echo("strapXelbowOffset = ", strapXelbowOffset);
 echo("strapXwristOffset = ", strapXwristOffset);
 
-if (attachmentTongueLength > braceVoidHeight-strapXwristOffset) {
+if (attachmentTongueLength > braceVoidHeight - strapXwristOffset - strapWidth/2) {
     echo("FAIL - attachment Tongue Length is too long and will stick into strap path");
+    
+    echo("Tongue is ", attachmentTongueLength, " deep. And strap void is within ", braceVoidHeight - strapXwristOffset - strapWidth/2, " from end of brace.");
     //ugh make a better fail or make an if statement that actually halts render down below
 }
 
@@ -187,6 +202,7 @@ if (attachmentTongueLength > braceVoidHeight-strapXwristOffset) {
 //MAKE STUFF
 //
 
+//TODO pass coverage ratio to module call?
 //subtract strap voids from main brace wall
 module brace(){
 difference(){
@@ -298,7 +314,7 @@ difference(){
                 
             if (makeTongue){
             //tongue attachment void
-                xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
+//                xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
                 
             tongueAngleOffset = -2 * (90 - armBraceAngle);
                 
@@ -307,8 +323,8 @@ difference(){
                         linear_extrude(attachmentTongueLength){
                             polygon([
                             [0,0],
-                            [xCoordAttachmentTongueAngleCutout,-100],
-                            [-xCoordAttachmentTongueAngleCutout,-100]
+                            [xCoordAttachmentTongueAngleCutout,-attachmentArbitraryBigNumber],
+                            [-xCoordAttachmentTongueAngleCutout,-attachmentArbitraryBigNumber]
                             ]);
                         }
                     }
@@ -331,7 +347,7 @@ difference(){
 
 //TODO test print and see if more tolerance needed - and if need to change elbow side tolerance
   //tolerance exists on inside and outside of brace, but not on (thin) sides of tongue
-//TODO also what is thickness of tongue at elbow side, vs thickness of tongue void at wrist side...? will this stop the bottom of tongue from sliding in past top of tongue void opening? or is neglible enough that it might actually help friction fit it??
+//TODO TODO TODO also what is thickness of tongue at elbow side, vs thickness of tongue void at wrist side...? will this stop the bottom of tongue from sliding in past top of tongue void opening? or is neglible enough that it might actually help friction fit it??
 //FIXME I somehow highly doubt this will be done right the first time, no way this tongue could fit in...
 
 module tongue(){
@@ -358,7 +374,7 @@ translate([100,0,0]){
         
         } //end of difference between inner and outer lofted objects to form overall strap wall 
     
-    xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
+//    xCoordAttachmentTongueAngleCutout = tan((attachmentTongueCoverageRatio/2)*360)*100;
     
     tongueAngleOffset = tongueAngleOffsetRatio * (90 - armBraceAngle); 
     
@@ -367,8 +383,8 @@ translate([100,0,0]){
             linear_extrude(attachmentTongueLength){
                 polygon([
                     [0,0],
-                    [xCoordAttachmentTongueAngleCutout,-100],
-                    [-xCoordAttachmentTongueAngleCutout,-100]
+                    [xCoordAttachmentTongueAngleCutout,-attachmentArbitraryBigNumber],
+                    [-xCoordAttachmentTongueAngleCutout,-attachmentArbitraryBigNumber]
                 ]);
             }
         }
@@ -389,14 +405,44 @@ translate([100,0,0]){
     //yes this is excessive to just linear extrude an ellipse, but it is the same code... so less chance of errors??
     intersection(){    
         difference(){
-            //outermost strap wall
-            loft(
-                [
-                    [for(p = shape_ellipse([strapWallOuterWristWidth/2, strapWallOuterWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]],
-                    [for(p = shape_ellipse([strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance, strapWallOuterWristDepth/2-attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight + attachmentTonguePlatformHeight]]        
-                ],
-                slices = 1
-            );
+            union(){
+                //outermost strap wall
+                loft(
+                    [
+                        [for(p = shape_ellipse([strapWallOuterWristWidth/2, strapWallOuterWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight]],
+                        [for(p = shape_ellipse([1000,braceOuterWristDepth/2], $fn = currentFNs)) [p[0], p[1], braceVoidHeight + attachmentTonguePlatformHeight]]
+    //                    [for(p = shape_ellipse([strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance, strapWallOuterWristDepth/2-attachmentTongueThicknessTolerance], $fn = currentFNs)) [p[0], p[1], braceVoidHeight + attachmentTonguePlatformHeight]]        
+                    ],
+                    slices = 1
+                );
+                        
+                //platform rollover
+                difference(){
+                    translate([-(xCoordAttachmentTonguePlatformAngleCutout/2),-(braceOuterWristDepth/2),braceVoidHeight + attachmentTonguePlatformHeight]){
+                        rotate([0,90,0]){
+                            cylinder(xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius);
+                        }
+                    }
+                    
+                    //remove outside half
+                    translate([-(xCoordAttachmentTonguePlatformAngleCutout/2),-braceOuterWristDepth/2-platformRolloverRadius,braceVoidHeight + attachmentTonguePlatformHeight-platformRolloverRadius]){
+                        cube([xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius*2]);
+                    }
+                      
+                    //remove inside lower quarter  
+                    translate([-(xCoordAttachmentTonguePlatformAngleCutout/2),-braceOuterWristDepth/2,braceVoidHeight + attachmentTonguePlatformHeight-platformRolloverRadius]){
+                        cube([xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius]);
+                    }
+                }
+                
+                
+                //platform horizontal overshelf
+                translate([-(platformOvershelfWidth/2),-braceOuterWristDepth/2-platformOvershelfDepth,braceVoidHeight + attachmentTonguePlatformHeight]){
+                    cube([platformOvershelfWidth,platformOvershelfDepth,platformRolloverRadius]);
+                }
+                    
+                    
+            } //end union
         
             //inner strap wall
             loft(
@@ -408,27 +454,101 @@ translate([100,0,0]){
             );
         
         } //end of difference between inner and outer lofted objects to form overall strap wall 
+        
+ 
     
-        xCoordAttachmentTonguePlatformAngleCutout = tan((attachmentTonguePlatformCoverageRatio/2)*360)*100;
+//        xCoordAttachmentTonguePlatformAngleCutout = tan((attachmentTonguePlatformCoverageRatio/2)*360)*100;
         
         //            tongueAngleOffset = tongueAngleOffsetRatio * (90 - armBraceAngle);
         
         translate([0,0,braceVoidHeight]){
         //                    rotate([tongueAngleOffset,0,0]){
-            linear_extrude(attachmentTonguePlatformHeight){
+            //oh this was lazy. make a polyhedron instaed of extrude below. can also then round edges of polyhedron to get smooth corners
+            linear_extrude(attachmentTonguePlatformHeight+platformRolloverRadius){
                 polygon([
                     [0,0],
-                    [xCoordAttachmentTonguePlatformAngleCutout,-100],
-                    [-xCoordAttachmentTonguePlatformAngleCutout,-100]
+                    [xCoordAttachmentTonguePlatformAngleCutout,-attachmentArbitraryBigNumber],
+                    [-xCoordAttachmentTonguePlatformAngleCutout,-attachmentArbitraryBigNumber]
                 ]);
             }
         //                    }
         }
+        
+        //FIXME also have a box that effectively stops the platform rollover from fanning out far past the effective width of tounge joint ellipse?
+    } //end intersection
+    
+    //upward trending platform
+    translate([-(platformOvershelfWidth/2),-(braceOuterWristDepth/2)-platformOvershelfDepth,braceVoidHeight + attachmentTonguePlatformHeight + platformRolloverRadius]){
+        rotate([45,0,0]){
+            translate([0,-platformRolloverRadius,0]){
+                difference(){
+                    cube([platformOvershelfWidth,platformRolloverRadius,70]);
+                    
+                    translate([platformOvershelfWidth/2-14/2,0,70-14-10]){
+                        cube([14,platformRolloverRadius,14]); //14mm is size of mx keyswitch
+                    }
+                }
+            }
+        }       
     }
+                    
+                   difference(){
+                    translate([-(platformOvershelfWidth/2),-(braceOuterWristDepth/2)-platformOvershelfDepth,braceVoidHeight + attachmentTonguePlatformHeight + platformRolloverRadius]){
+                        rotate([0,90,0]){
+                            cylinder(platformOvershelfWidth,platformRolloverRadius,platformRolloverRadius);
+                        }
+                    }
+               
+               
+                    translate([-(platformOvershelfWidth/2),-braceOuterWristDepth/2-platformOvershelfDepth - platformRolloverRadius,braceVoidHeight + attachmentTonguePlatformHeight + platformRolloverRadius]){
+                        cube([platformOvershelfWidth,platformOvershelfDepth,platformRolloverRadius]);
+                    }
+
+
+    
+                    
+//    translate([-(platformOvershelfWidth/2),-(braceOuterWristDepth/2)-platformOvershelfDepth-platformRolloverRadius/2+platformRolloverRadius,braceVoidHeight + attachmentTonguePlatformHeight + platformRolloverRadius/4]){
+//                        rotate([45,0,0]){
+//                            cube([platformOvershelfWidth,platformRolloverRadius*2,70]);
+////                            cylinder(xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius);
+//                        }
+//                    }
+                    
+                    
+                }
 
 }
 } //end module tongue
 //whitespace (when module collapsed)
+
+
+
+                
+                
+
+//        xCoordAttachmentTonguePlatformAngleCutout = tan((attachmentTonguePlatformCoverageRatio/2)*360)*100;
+////platform vars
+//platformRolloverRadius = 6;
+//difference(){
+//    translate([100-(xCoordAttachmentTonguePlatformAngleCutout/2),-(braceOuterWristDepth/2),braceVoidHeight + attachmentTonguePlatformHeight]){
+//        rotate([0,90,0]){
+//            cylinder(xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius);
+//            //cube([(strapWallOuterWristWidth/2-attachmentTongueThicknessTolerance)*2,3,6]);
+//        }
+//    }
+//    
+//    //remove outside half
+//    translate([100-(xCoordAttachmentTonguePlatformAngleCutout/2),-braceOuterWristDepth/2-platformRolloverRadius,braceVoidHeight + attachmentTonguePlatformHeight-platformRolloverRadius]){
+//        cube([xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius*2]);
+//    }
+//      
+//    //remove inside lower quarter  
+//    translate([100-(xCoordAttachmentTonguePlatformAngleCutout/2),-braceOuterWristDepth/2,braceVoidHeight + attachmentTonguePlatformHeight-platformRolloverRadius]){
+//        cube([xCoordAttachmentTonguePlatformAngleCutout,platformRolloverRadius,platformRolloverRadius]);
+//    }
+//}
+
+
 
 if (printBrace){
     brace();
