@@ -1,4 +1,4 @@
-# arm-brace
+# Arm Brace with Platform
 OpenSCAD model of arm brace
 
 ## Status
@@ -6,19 +6,23 @@ First steps in first rough cut of arm brace off of user input measurements.
 
 STL files are created from notional arm measurements of:
 
-Arm length in inches = 8;
+Arm length in inches = 5 3/4;
 
-Arm Width at Elbow in Inches = 5;
-Arm Width at Wrist in Inches = 3.5;
+Arm Width at Elbow in Inches = 3;
+Arm Width at Wrist in Inches = 2.5;
 
-Arm Height at Elbow in Inches = 3;
-Arm Height at Wrist in Inches = 2;
+Arm Height at Elbow in Inches = 2 3/4;
+Arm Height at Wrist in Inches = 1 5/8;
 
-Have not yet printed, but Cura gives the following info for bottom brace (larger, with 45% arm coverage):
-101g, 3.56267oz weight at 30% cubic infill.
-Would take about 9.5 hours to print and have a 138.9 x 39.0 x 203.2 mm print area.
+Printed with a 1mm wall between arm and strap. This was not really thick enough.
 
-Most 1.75mm diameter filament spools are 1kg for about $25, so this would only cost $2.50 to print this. Even less for smaller braces.
+Now the arm-brace-lower.stl has a 2mm wall but has not yet been printed.
+
+Prusa Slicer gives the following info for bottom brace (larger, with 45% circular arm coverage):
+75g at 30% cubic infill.
+Would take about 6.75 hours to print at 0.24mm layer heights and have a 92.8 x 38.75 x 146.2 mm print area.
+
+Most 1.75mm diameter filament spools are 1kg for about $25, so it would only cost about $1.87 to print this. Even less for smaller braces.
 
 ## Measurement Descriptions & Picture
 Measurements are taken from an arm laying along a table with palm and elbow on table.
